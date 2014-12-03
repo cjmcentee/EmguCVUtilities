@@ -228,3 +228,13 @@ $RECYCLE.BIN/
 *.msi
 *.msm
 *.msp
+
+
+# ========================
+# Project Specific Files
+# ========================
+
+# Common bin build directory, at solution level
+[Bb]in/
+# The object directory is at the project level, one folder in
+*/[Oo]bj/
