@@ -238,3 +238,10 @@ $RECYCLE.BIN/
 [Bb]in/
 # The object directory is at the project level, one folder in
 */[Oo]bj/
+
+
+# Ignore visual studio project and solution files because deployment environments might have the specific files in different locations
+*.suo
+*.sln
+*.csproj
+
