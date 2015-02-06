@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TifReader", "Tif16Bit\TifRe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmguCVExtensions", "EmguCVExtensions\EmguCVExtensions.csproj", "{45C9761D-8E14-44F8-8B9A-120804F80EB3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestBed", "TestBed\TestBed.csproj", "{184A6DAB-EFB2-4F0C-ABC1-AA2E1BEA8DCE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{45C9761D-8E14-44F8-8B9A-120804F80EB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{45C9761D-8E14-44F8-8B9A-120804F80EB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{45C9761D-8E14-44F8-8B9A-120804F80EB3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{184A6DAB-EFB2-4F0C-ABC1-AA2E1BEA8DCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{184A6DAB-EFB2-4F0C-ABC1-AA2E1BEA8DCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{184A6DAB-EFB2-4F0C-ABC1-AA2E1BEA8DCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{184A6DAB-EFB2-4F0C-ABC1-AA2E1BEA8DCE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

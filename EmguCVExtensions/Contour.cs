@@ -1,4 +1,6 @@
 ﻿using Emgu.CV;
+using Emgu.CV.CvEnum;
+using Emgu.CV.Structure;
 using MathExtensions;
 using System;
 using System.Collections.Generic;
@@ -7,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ImageProcessor
+namespace EmguCVExtensions
 {
     // Wrapper class for the retardation that is Emgu CV's uncopyable, unindexable contour class
     // The emgu class "Contour<Point>" is a pointer to a native contour object, the only way to
@@ -20,6 +22,21 @@ namespace ImageProcessor
     // Fuck emgucv
     public class Contour
     {
+        ////////////////////////////////////////////////
+        //                  Constants
+        ////////////////////////////////////////////////
+        private static readonly string CIRCLE_FILE_NAME = "circle.tif";
+        public  static readonly Contour Circle = GenerateCircle(CIRCLE_RADIUS);
+        private static readonly int CIRCLE_RADIUS = 10;
+        private static Contour GenerateCircle(int radius) {
+            var image = new Image<Gray, byte>(CIRCLE_FILE_NAME);
+            List<Contour> contours = ContourProcessing.FindContours(image);
+            return contours[0];
+        }
+
+        ////////////////////////////////////////////////
+        //                  Fields
+        ////////////////////////////////////////////////
         public readonly Contour<Point> emgu;
         public readonly Rectangle BoundingRectangle;
 
@@ -47,8 +64,21 @@ namespace ImageProcessor
             get { return Center.RelativeTo(new PointF((float)ImageWidth/2, (float)ImageHeight/2)); }
         }
 
+        public List<Point> Points {
+            get {
+                List<Point> points = new List<Point>();
+                foreach (Point p in emgu)
+                    points.Add(p);
+                return points;
+            }
+        }
+
         public readonly int ImageWidth, ImageHeight;
 
+
+        ////////////////////////////////////////////////
+        //              Constructors
+        ////////////////////////////////////////////////
         public Contour(Contour<Point> emguContour, int imageWidth, int imageHeight) {
             emgu = new Contour<Point>(new MemStorage());
             foreach (Point p in emguContour)
@@ -59,6 +89,10 @@ namespace ImageProcessor
             this.ImageHeight = imageHeight;
         }
 
+
+        ////////////////////////////////////////////////
+        //                  Methods
+        ////////////////////////////////////////////////
         public bool Contains(Point p) {
             return BoundingRectangle.Contains(p);
         }
@@ -87,6 +121,10 @@ namespace ImageProcessor
             }
             else
                 return false;
+        }
+
+        public double Circleness() {
+            return emgu.MatchShapes(Contour.Circle.emgu, CONTOURS_MATCH_TYPE.CV_CONTOUR_MATCH_I1);
         }
     }
 }

@@ -17,9 +17,8 @@ namespace TifReader
             {
                 using(Image tif = Image.FromStream(stream, false, false))
                 {
-                    // This is only meant to open tif files, so we can expect width and height to be integers
-                    int width = (int) tif.PhysicalDimension.Width;
-                    int height = (int) tif.PhysicalDimension.Height;
+                    int width = tif.Width;
+                    int height = tif.Height;
 
                     // Read as ummanaged object
                     IntPtr imP = CvInvoke.cvLoadImage(filePath, Emgu.CV.CvEnum.LOAD_IMAGE_TYPE.CV_LOAD_IMAGE_ANYDEPTH);

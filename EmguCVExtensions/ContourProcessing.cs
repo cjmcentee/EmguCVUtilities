@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ImageProcessor
+namespace EmguCVExtensions
 {
     public static class ContourProcessing
     {
@@ -19,6 +19,19 @@ namespace ImageProcessor
             }
 
             return allContours;
+        }
+
+        public static List<Contour> FindContours<TDepth, TColor>(Image<TColor, TDepth> image)
+            where TColor : struct, global::Emgu.CV.IColor
+            where TDepth : new()
+        {
+            Contour<Point> contours = image.FindContours();
+
+            int width  = image.Width;
+            int height = image.Height;
+            var contourList = ContoursToList(contours, width, height);
+
+            return contourList;
         }
     }
 }
