@@ -1,17 +1,15 @@
-﻿using Emgu.CV;
-using Emgu.CV.CvEnum;
-using Emgu.CV.Structure;
-using MathExtensions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Emgu.CV;
+using Emgu.CV.CvEnum;
+using Emgu.CV.Structure;
+using MathExtensions;
 
 namespace EmguCVExtensions
 {
-    // Wrapper class for the retardation that is Emgu CV's uncopyable, unindexable contour class
+    // Wrapper class for the retardation that is emgu's CV's uncopyable, unindexable contour class
     // The emgu class "Contour<Point>" is a pointer to a native contour object, the only way to
     // access the other contours is into increment the pointer through the list
     // But if we want to use any, ANY, of C#'s list features, we have to copy each contour
@@ -25,10 +23,10 @@ namespace EmguCVExtensions
         ////////////////////////////////////////////////
         //                  Constants
         ////////////////////////////////////////////////
-        private static readonly string CIRCLE_FILE_NAME = "circle.tif";
-        public  static readonly Contour Circle = GenerateCircle(CIRCLE_RADIUS);
-        private static readonly int CIRCLE_RADIUS = 10;
-        private static Contour GenerateCircle(int radius) {
+        public  static readonly Contour Circle = GenerateCircle();
+
+        private const string CIRCLE_FILE_NAME = "circle.tif";
+        private static Contour GenerateCircle() {
             var image = new Image<Gray, byte>(CIRCLE_FILE_NAME);
             List<Contour> contours = ContourProcessing.FindContours(image);
             return contours[0];
@@ -37,56 +35,49 @@ namespace EmguCVExtensions
         ////////////////////////////////////////////////
         //                  Fields
         ////////////////////////////////////////////////
-        public readonly Contour<Point> emgu;
-        public readonly Rectangle BoundingRectangle;
+        internal readonly Contour<Point> emguContour;
+        internal readonly Point offset;
 
-        public double DimensionRatio {
-            get { return (double)(BoundingRectangle.Width) / (double)(BoundingRectangle.Height); }
-        }
+        public Rectangle BoundingRectangle { get; private set; }
 
-        public double Diameter {
-            get { return (BoundingRectangle.Width + BoundingRectangle.Height)/2; }
-        }
 
+        ////////////////////////////////////////////////
+        //                Properties
+        ////////////////////////////////////////////////
         public double Area {
-            get { return emgu.Area; }
+            get { return emguContour.Area; }
         }
 
         public double Perimeter {
-            get { return emgu.Perimeter; }
+            get { return emguContour.Perimeter; }
         }
 
         public PointF Center {
-            get { return BoundingRectangle.CenterF(); }
-        }
-
-        public PointF ImageCenterDisplacement {
-            get { return Center.RelativeTo(new PointF((float)ImageWidth/2, (float)ImageHeight/2)); }
+            get { return new PointF(offset.X + BoundingRectangle.CenterF().X,
+                                    offset.Y + BoundingRectangle.CenterF().Y); }
         }
 
         public List<Point> Points {
             get {
-                List<Point> points = new List<Point>();
-                foreach (Point p in emgu)
-                    points.Add(p);
-                return points;
+                return emguContour.ToList();
             }
         }
-
-        public readonly int ImageWidth, ImageHeight;
 
 
         ////////////////////////////////////////////////
         //              Constructors
         ////////////////////////////////////////////////
-        public Contour(Contour<Point> emguContour, int imageWidth, int imageHeight) {
-            emgu = new Contour<Point>(new MemStorage());
-            foreach (Point p in emguContour)
-                emgu.Push(p);
-            this.BoundingRectangle = emguContour.BoundingRectangle;
+        public Contour(Contour<Point> emguContour)
+            : this(emguContour, new Point()) { }
 
-            this.ImageWidth = imageWidth;
-            this.ImageHeight = imageHeight;
+        public Contour(Contour<Point> emguContour, Point offset) {
+            this.offset = offset;
+            this.BoundingRectangle = emguContour.BoundingRectangle.OffsetBy(offset);
+
+            this.emguContour = new Contour<Point>(new MemStorage());
+            foreach (Point p in emguContour) {
+                this.emguContour.Push(p.OffsetBy(offset));
+            }
         }
 
 
@@ -97,34 +88,12 @@ namespace EmguCVExtensions
             return BoundingRectangle.Contains(p);
         }
 
-        public bool IsNearCenter() {
-            int minSideLength = Math.Min(ImageWidth, ImageHeight);
-            return DistanceToCenter() < minSideLength/4;
-        }
-
-        public double DistanceToCenter() {
-            PointF center = new PointF(ImageWidth/2, ImageHeight/2);
-            PointF contourCenter = emgu.GetMinAreaRect().center;
-
-            return center.DistanceFrom(contourCenter);
+        public double CalculateCircleness() {
+            return emguContour.MatchShapes(Circle.emguContour, CONTOURS_MATCH_TYPE.CV_CONTOUR_MATCH_I1);
         }
 
         public bool IsCircular() {
-            // Test for bounding rectangle being approximately a square
-            if (Math.Abs(BoundingRectangle.Width - BoundingRectangle.Height) < 3) {
-                double radius = Diameter/2;
-                double estimatedArea = Math.Pow(radius, 2) * Math.PI;
-                double areaError = Area * 0.25;
-
-                bool contourCircular = Math.Abs(estimatedArea - Area) < areaError;
-                return contourCircular;
-            }
-            else
-                return false;
-        }
-
-        public double Circleness() {
-            return emgu.MatchShapes(Contour.Circle.emgu, CONTOURS_MATCH_TYPE.CV_CONTOUR_MATCH_I1);
+            return CalculateCircleness() < 0.1;
         }
     }
 }

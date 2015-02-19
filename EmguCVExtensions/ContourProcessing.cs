@@ -1,37 +1,47 @@
-﻿using Emgu.CV;
-using MathExtensions;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Emgu.CV;
+using MathExtensions;
 
 namespace EmguCVExtensions
 {
     public static class ContourProcessing
     {
-        public static List<Contour> ContoursToList(Contour<Point> contour, int imageWidth, int imageHeight) {
+        public static List<Contour> ContoursToList(Contour<Point> contour) {
+            return ContoursToList(contour, new Point());
+        }
+
+        public static List<Contour> ContoursToList(Contour<Point> contour, Point offset) {
             var allContours = new List<Contour>();
             while (contour != null) {
-                allContours.Add(new Contour(contour, imageWidth, imageHeight));
+                Contour c = new Contour(contour, offset);
+                allContours.Add(c);
                 contour = contour.HNext;
             }
 
             return allContours;
         }
 
-        public static List<Contour> FindContours<TDepth, TColor>(Image<TColor, TDepth> image)
-            where TColor : struct, global::Emgu.CV.IColor
+        public static List<Contour> FindContours<TColor, TDepth>(Image<TColor, TDepth> image, Rectangle searchArea)
+            where TColor : struct, IColor
             where TDepth : new()
         {
-            Contour<Point> contours = image.FindContours();
+            var searchImageArea = searchArea.IntersectWith(image.Rectangle());
+            var searchImage = image.GetSubRect(searchImageArea);
 
-            int width  = image.Width;
-            int height = image.Height;
-            var contourList = ContoursToList(contours, width, height);
+            Contour<Point> contours = searchImage.FindContours();
+
+            Point offset = searchImageArea.TopLeft();
+            var contourList = ContoursToList(contours, offset);
 
             return contourList;
+        }
+
+        public static List<Contour> FindContours<TColor, TDepth>(Image<TColor, TDepth> image)
+            where TColor : struct, IColor
+            where TDepth : new()
+        {
+            return FindContours(image, image.Rectangle());
         }
     }
 }
