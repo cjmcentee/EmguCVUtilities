@@ -62,22 +62,35 @@ namespace EmguCVExtensions
                 return emguContour.ToList();
             }
         }
+        public List<Point> Points_BoundingBoxTopLeft { 
+            get { 
+                return (from point in emguContour
+                        let point_local = point.RelativeTo(BoundingRectangle.TopLeft())
+                        select point_local).ToList();
+            }
+        }
+        
 
 
         ////////////////////////////////////////////////
         //              Constructors
         ////////////////////////////////////////////////
-        public Contour(Contour<Point> emguContour)
-            : this(emguContour, new Point()) { }
-
-        public Contour(Contour<Point> emguContour, Point offset) {
+        public Contour(Contour<Point> emguContour, Point offset=new Point()) {
             this.offset = offset;
             this.BoundingRectangle = emguContour.BoundingRectangle.OffsetBy(offset);
 
             this.emguContour = new Contour<Point>(new MemStorage());
-            foreach (Point p in emguContour) {
+            foreach (Point p in emguContour)
                 this.emguContour.Push(p.OffsetBy(offset));
-            }
+        }
+
+        public Contour(Contour contour, Point offset=new Point()) {
+            this.offset = offset;
+            this.BoundingRectangle = contour.BoundingRectangle.OffsetBy(offset);
+
+            this.emguContour = new Contour<Point>(new MemStorage());
+            foreach (Point p in contour.Points)
+                this.emguContour.Push(p.OffsetBy(offset));
         }
 
 
@@ -94,6 +107,10 @@ namespace EmguCVExtensions
 
         public bool IsCircular() {
             return CalculateCircleness() < 0.1;
+        }
+
+        public Contour Offset(Point offsetAmount) {
+            return new Contour(this, offsetAmount);
         }
     }
 }

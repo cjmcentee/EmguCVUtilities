@@ -18,6 +18,15 @@ namespace EmguCVExtensions
             return new Rectangle(new Point(), image.Size);
         }
 
+        public static void Draw<TDepth>(this Image<Rgb, TDepth> image, Rectangle rectangle, Color color, int thickness)
+            where TDepth : new()
+        {
+            image.Draw(rectangle, new Rgb(color), thickness);
+        }
+
+        public static void Draw<TDepth>(this Image<Rgb, TDepth> image, PointF point, Color color, int thickness)
+            where TDepth : new() { image.Draw(point, new Rgb(color), thickness); }
+
         public static void Draw<TDepth, TColor>(this Image<TColor, TDepth> image, PointF point, TColor color, int thickness)
             where TColor : struct, IColor
             where TDepth : new()
@@ -29,6 +38,8 @@ namespace EmguCVExtensions
             image.Draw(circle, color, DRAW_FILL);
         }
 
+        public static void Draw<TDepth>(this Image<Rgb, TDepth> image, Point point, Color color, int thickness)
+            where TDepth : new() { image.Draw(point, new Rgb(color), thickness); }
         public static void Draw<TDepth, TColor>(this Image<TColor, TDepth> image, Point point, TColor color, int thickness)
             where TColor : struct, IColor
             where TDepth : new()
@@ -40,21 +51,25 @@ namespace EmguCVExtensions
             image.Draw(circle, color, DRAW_FILL);
         }
 
+        public static void Draw<TDepth>(this Image<Rgb, TDepth> image, RotatedRectangle rect, Color color, int thickness)
+            where TDepth : new() { image.Draw(rect, new Rgb(color), thickness); }
         public static void Draw<TDepth, TColor>(this Image<TColor, TDepth> image, RotatedRectangle rect, TColor color, int thickness)
             where TColor : struct, IColor
             where TDepth : new()
         {
-            var top    = new LineSegment2DF(rect.TopRight, rect.TopLeft);
-            var left   = new LineSegment2DF(rect.TopLeft, rect.BottomLeft);
-            var bottom = new LineSegment2DF(rect.BottomLeft, rect.BottomRight);
-            var right  = new LineSegment2DF(rect.BottomRight, rect.TopRight);
+            var top    = new LineSegment2DF(rect.TopRight,    rect.TopLeft    );
+            var left   = new LineSegment2DF(rect.TopLeft,     rect.BottomLeft );
+            var bottom = new LineSegment2DF(rect.BottomLeft,  rect.BottomRight);
+            var right  = new LineSegment2DF(rect.BottomRight, rect.TopRight   );
 
-            image.Draw(top, color, thickness);
-            image.Draw(left, color, thickness);
+            image.Draw(top,    color, thickness);
+            image.Draw(left,   color, thickness);
             image.Draw(bottom, color, thickness);
-            image.Draw(right, color, thickness);
+            image.Draw(right,  color, thickness);
         }
 
+        public static void Draw<TDepth>(this Image<Rgb, TDepth> image, List<Contour> contours, Color color, int thickness)
+            where TDepth : new() { image.Draw(contours, new Rgb(color), thickness); }
         public static void Draw<TDepth, TColor>(this Image<TColor, TDepth> image, List<Contour> contours, TColor color, int thickness)
             where TColor : struct, IColor
             where TDepth : new()
@@ -63,6 +78,8 @@ namespace EmguCVExtensions
                 image.Draw(contour.emguContour, color, thickness);
         }
 
+        public static void Draw<TDepth>(this Image<Rgb, TDepth> image, Contour contour, Color color, int thickness)
+            where TDepth : new() { image.Draw(contour, new Rgb(color), thickness); }
         public static void Draw<TDepth, TColor>(this Image<TColor, TDepth> image, Contour contour, TColor color, int thickness)
             where TColor : struct, IColor
             where TDepth : new()
@@ -70,21 +87,31 @@ namespace EmguCVExtensions
             image.Draw(contour.emguContour, color, thickness);
         }
 
-        public static void Draw<TDepth, TColor, TShapeDepth>(this Image<TColor, TDepth> image, List<Shape<TShapeDepth>> shapes, TColor color)
+        public static void Draw<TDepth,TShapeColor, TShapeDepth>(this Image<Rgb, TDepth> image, List<Shape<TShapeColor, TShapeDepth>> shapes, Color color, int thickness)
+            where TDepth      : new()
+            where TShapeColor : struct, IColor
+            where TShapeDepth : new() { image.Draw(shapes, new Rgb(color), thickness); }
+        public static void Draw<TDepth, TColor, TShapeColor, TShapeDepth>(this Image<TColor, TDepth> image, List<Shape<TShapeColor, TShapeDepth>> shapes, TColor color, int thickness)
             where TColor      : struct, IColor
             where TDepth      : new()
+            where TShapeColor : struct, IColor
             where TShapeDepth : new()
         {
-            foreach (Shape<TShapeDepth> shape in shapes)
-                image.Draw(shape.Contour, color, DRAW_FILL);
+            foreach (Shape<TShapeColor, TShapeDepth> shape in shapes)
+                image.Draw(shape.Contour, color, thickness);
         }
 
-        public static void Draw<TDepth, TColor, TShapeDepth>(this Image<TColor, TDepth> image, Shape<TShapeDepth> shape, TColor color)
+        public static void Draw<TDepth, TShapeColor, TShapeDepth>(this Image<Rgb, TDepth> image, Shape<TShapeColor, TShapeDepth> shape, Color color, int thickness)
+            where TDepth      : new()
+            where TShapeColor : struct, IColor
+            where TShapeDepth : new() { image.Draw(shape, new Rgb(color), thickness); }
+        public static void Draw<TDepth, TColor, TShapeColor, TShapeDepth>(this Image<TColor, TDepth> image, Shape<TShapeColor, TShapeDepth> shape, TColor color, int thickness)
             where TColor      : struct, IColor
             where TDepth      : new()
+            where TShapeColor : struct, IColor
             where TShapeDepth : new()
         {
-            image.Draw(shape.Contour, color, DRAW_FILL);
+            image.Draw(shape.Contour, color, thickness);
         }
 
         public static Point MaxLocation<TDepth>(this Image<Gray, TDepth> image)

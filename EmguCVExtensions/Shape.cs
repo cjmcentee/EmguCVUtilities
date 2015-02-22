@@ -9,13 +9,14 @@ using MathExtensions;
 
 namespace EmguCVExtensions
 {
-    public class Shape<TDepth>
+    public class Shape<TColor, TDepth>
+        where TColor : struct, IColor
         where TDepth : new()
     {
         ////////////////////////////////////////////////
         //                  Fields
         ////////////////////////////////////////////////
-        public readonly Image<Gray, TDepth> SourceImage;
+        public readonly Image<TColor, TDepth> SourceImage;
         internal readonly Contour Contour;
 
         ////////////////////////////////////////////////
@@ -25,6 +26,7 @@ namespace EmguCVExtensions
         public double Perimeter             { get { return Contour.Perimeter; } }
         public PointF Center                { get { return BoundingRectangle.CenterF(); } }
         public List<Point> Points           { get { return Contour.Points; } }
+        public List<Point> Points_Local     { get { return Contour.Points_BoundingBoxTopLeft; } }
         public Rectangle BoundingRectangle  { get { return Contour.BoundingRectangle; } }
 
         public PointF ImageCenterDisplacement {
@@ -35,12 +37,12 @@ namespace EmguCVExtensions
         ////////////////////////////////////////////////
         //                Constructors
         ////////////////////////////////////////////////
-        public Shape(Image<Gray, TDepth> sourceImage, Contour contour) {
+        public Shape(Image<TColor, TDepth> sourceImage, Contour contour) {
             this.SourceImage = sourceImage;
             this.Contour = contour;
         }
 
-        public Shape(Image<Gray, TDepth> sourceImage, Image<Gray, byte> contourMask)
+        public Shape(Image<TColor, TDepth> sourceImage, Image<Gray, byte> contourMask)
         {
             this.SourceImage = sourceImage;
 
@@ -50,12 +52,12 @@ namespace EmguCVExtensions
             this.Contour = contours.First();
         }
 
-        public static List<Shape<TDepth>> FromMask<TContourDepth>(Image<Gray, TDepth> sourceImage, Image<Gray, TContourDepth> contourMask)
+        public static List<Shape<TColor, TDepth>> FromMask<TContourDepth>(Image<TColor, TDepth> sourceImage, Image<Gray, TContourDepth> contourMask)
             where TContourDepth : new()
         {
             var contours = ContourProcessing.FindContours(contourMask);
             var shapes = from contour in contours
-                         select new Shape<TDepth>(sourceImage, contour);
+                         select new Shape<TColor, TDepth>(sourceImage, contour);
             return shapes.ToList();
         }
 
@@ -63,23 +65,28 @@ namespace EmguCVExtensions
         ////////////////////////////////////////////////
         //                 Processing
         ////////////////////////////////////////////////
-        public List<int> GetPixelIntensities() {
+        public List<int> GetGrayScalePixelIntensities() {
+            var croppedImage = SourceImage.GetSubRect(this.BoundingRectangle).Convert<Gray, TDepth>();
+
             var spotValues =
-                from point in Contour.emguContour
-                let grayValue = SourceImage[point]
+                from point in Points_Local
+                let grayValue = croppedImage[point]
                 select (int) grayValue.Intensity;
 
             return spotValues.ToList();
         }
 
-        public List<int> GetNonShapePixelIntensities() {
+        public List<int> GetNonShapeGrayScalePixelIntensities() {
+
+            var croppedImage = SourceImage.GetSubRect(this.BoundingRectangle).Convert<Gray, TDepth>();
 
             var nonSpotValues = new List<int>();
-            for (int x = 0; x < SourceImage.Width; x++) {
-                for (int y = 0; y < SourceImage.Height; y++) {
+            for (int x = 0; x < croppedImage.Width; x++) {
+                for (int y = 0; y < croppedImage.Height; y++) {
                     Point pixel = new Point(x, y);
-                    if ( ! Contour.Contains(pixel)) {
-                        Gray grayValue = SourceImage[pixel];
+                    
+                    if ( ! Points_Local.Contains(pixel)) {
+                        Gray grayValue = croppedImage[pixel];
                         nonSpotValues.Add((int) grayValue.Intensity);
                     }
                 }
@@ -89,10 +96,10 @@ namespace EmguCVExtensions
         }
 
         public List<int> GetRelativePixelIntensities() {
-            int medianNonSpotIntensity = GetPixelIntensities().Median();
+            int medianNonSpotIntensity = GetGrayScalePixelIntensities().Median();
 
             var relativeSpotValues =
-                from spotValue in GetPixelIntensities()
+                from spotValue in GetGrayScalePixelIntensities()
                 let relativeValue = spotValue - medianNonSpotIntensity
                 select relativeValue;
 

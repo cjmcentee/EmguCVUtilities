@@ -30,7 +30,7 @@ namespace TestBed
             flowPanel.Controls.Add(pictureBox);
 
             //foreach (Contour contour in contours)
-            //    foreach (Point p in contour.Points)
+            //    foreach (Point p in contour.Points_SourceImage)
             //        Console.Write(p);
         }
 
