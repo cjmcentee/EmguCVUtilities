@@ -51,6 +51,13 @@
   <ItemGroup>
     <Compile Include="Tif16Bit.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="IFDTag.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EmguCVExtensions\EmguCVExtensions.csproj">
+      <Project>{45C9761D-8E14-44F8-8B9A-120804F80EB3}</Project>
+      <Name>EmguCVExtensions</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

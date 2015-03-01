@@ -5,6 +5,7 @@ using System.Linq;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
+using Emgu.CV.Util;
 using MathExtensions;
 
 namespace EmguCVExtensions
@@ -14,20 +15,46 @@ namespace EmguCVExtensions
         where TDepth : new()
     {
         ////////////////////////////////////////////////
+        //                  Constants
+        ////////////////////////////////////////////////
+        public  static readonly Shape<Gray, byte> Circle = GenerateCircle();
+
+        private const string CIRCLE_FILE_NAME = "circle.tif";
+        private static Shape<Gray, byte> GenerateCircle() {
+            var image = new Image<Gray, byte>(CIRCLE_FILE_NAME);
+            var shapes = ContourProcessing.FindContours(image)       .ToList()
+                        .Select(c => new Shape<Gray, byte>(image, c)).ToList();
+            return shapes[0];
+        }
+
+        private const bool SHAPE_IS_CLOSED = true;
+
+        ////////////////////////////////////////////////
         //                  Fields
         ////////////////////////////////////////////////
+        internal readonly VectorOfPoint emguContour;
+        internal readonly Point offset;
+        
         public readonly Image<TColor, TDepth> SourceImage;
-        internal readonly Contour Contour;
+
+        public Rectangle BoundingRectangle { get; private set; }
+
 
         ////////////////////////////////////////////////
         //                Properties
         ////////////////////////////////////////////////
-        public double Area                  { get { return Contour.Area; } }
-        public double Perimeter             { get { return Contour.Perimeter; } }
-        public PointF Center                { get { return BoundingRectangle.CenterF(); } }
-        public List<Point> Points           { get { return Contour.Points; } }
-        public List<Point> Points_Local     { get { return Contour.Points_BoundingBoxTopLeft; } }
-        public Rectangle BoundingRectangle  { get { return Contour.BoundingRectangle; } }
+        public double Area              { get { return CvInvoke.ContourArea(emguContour); } }
+        public double Perimeter         { get { return CvInvoke.ArcLength(emguContour, SHAPE_IS_CLOSED); } }
+        public PointF Center            { get { return new PointF(offset.X + BoundingRectangle.CenterF().X,
+                                                                  offset.Y + BoundingRectangle.CenterF().Y); } }
+        public List<Point> Points       { get { return emguContour.ToList(); } }
+        public List<Point> Points_Local { 
+            get { 
+                return (from point in Points
+                        let point_local = point.RelativeTo(BoundingRectangle.TopLeft())
+                        select point_local).ToList();
+            }
+        }
 
         public PointF ImageCenterDisplacement {
             get { return Center.RelativeTo(new PointF((float)SourceImage.Width/2, (float)SourceImage.Height/2)); }
@@ -37,26 +64,22 @@ namespace EmguCVExtensions
         ////////////////////////////////////////////////
         //                Constructors
         ////////////////////////////////////////////////
-        public Shape(Image<TColor, TDepth> sourceImage, Contour contour) {
+        public Shape(Image<TColor, TDepth> sourceImage, VectorOfPoint inputContour, Point offset=new Point()) {
+            this.offset = offset;
             this.SourceImage = sourceImage;
-            this.Contour = contour;
-        }
+            this.BoundingRectangle = CvInvoke.BoundingRectangle(inputContour);
 
-        public Shape(Image<TColor, TDepth> sourceImage, Image<Gray, byte> contourMask)
-        {
-            this.SourceImage = sourceImage;
-
-            var contours = ContourProcessing.FindContours(contourMask);
-            if (contours.Count > 1)
-                throw new ArgumentException("Mask has more than one contour. Cannot construct shape.");
-            this.Contour = contours.First();
+            var offsetPoints = from point in inputContour.ToList()
+                               let offsetPoint = point.OffsetBy(offset)
+                               select offsetPoint;
+            this.emguContour = new VectorOfPoint(offsetPoints.ToArray());
         }
 
         public static List<Shape<TColor, TDepth>> FromMask<TContourDepth>(Image<TColor, TDepth> sourceImage, Image<Gray, TContourDepth> contourMask)
             where TContourDepth : new()
         {
-            var contours = ContourProcessing.FindContours(contourMask);
-            var shapes = from contour in contours
+            VectorOfVectorOfPoint contours = ContourProcessing.FindContours(contourMask);
+            var shapes = from contour in contours.ToList()
                          select new Shape<TColor, TDepth>(sourceImage, contour);
             return shapes.ToList();
         }
@@ -107,7 +130,7 @@ namespace EmguCVExtensions
         }
 
         public bool Contains(Point p) {
-            return Contour.BoundingRectangle.Contains(p);
+            return this.BoundingRectangle.Contains(p);
         }
 
         public bool IsNearCenter() {
@@ -117,17 +140,21 @@ namespace EmguCVExtensions
 
         public double DistanceToCenter() {
             PointF center = new PointF(SourceImage.Width/2, SourceImage.Height/2);
-            PointF contourCenter = Contour.emguContour.GetMinAreaRect().center;
+            PointF contourCenter = CvInvoke.MinAreaRect(this.emguContour).Center;
 
             return center.DistanceFrom(contourCenter);
         }
 
         public double CalculateCircleness() {
-            return Contour.emguContour.MatchShapes(Contour.Circle.emguContour, CONTOURS_MATCH_TYPE.CV_CONTOUR_MATCH_I1);
+            return CvInvoke.MatchShapes(Circle.emguContour, this.emguContour, ContoursMatchType.I1);
         }
 
         public bool IsCircular() {
             return CalculateCircleness() < 0.1;
+        }
+
+        public Shape<TColor, TDepth> OffsetBy(Point offsetAmount) {
+            return new Shape<TColor, TDepth>(this.SourceImage, this.emguContour, offsetAmount);
         }
     }
 }
