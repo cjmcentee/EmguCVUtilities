@@ -10,6 +10,25 @@ namespace EmguCVExtensions
 {
     public static class ShapeProcessing
     {
+        ////////////////////////////////////////////////
+        //                 Shape Display
+        ////////////////////////////////////////////////
+        public static Image<Gray, byte> CreateMask<TColor, TDepth>(IEnumerable<Shape<TColor, TDepth>> shapes, Size imageSize)
+            where TColor : struct, IColor
+            where TDepth : new()
+        {
+            var shapesMask = new Image<Gray, byte>(imageSize);
+            shapesMask.Draw(shapes, ImageExtensions.DRAW_WHITE, ImageExtensions.DRAW_FILL);
+            return shapesMask;
+        }
+
+        ////////////////////////////////////////////////
+        //                 Shape Finding
+        ////////////////////////////////////////////////
+        public static List<Shape<Gray, byte>> FindShapes(Image<Gray, byte> masterImage) {
+            return FindShapes(masterImage, masterImage.Convert<Gray, byte>(), masterImage.Rectangle());
+        }
+
         public static List<Shape<TColor, TDepth>> FindShapes<TColor, TDepth>(Image<TColor, TDepth> masterImage, Image<Gray, byte> shapeImage) where TColor : struct, IColor where TDepth : new() {
             return FindShapes(masterImage, shapeImage, masterImage.Rectangle());
         }

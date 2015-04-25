@@ -19,8 +19,8 @@ namespace EmguCVExtensions
         ////////////////////////////////////////////////
         //                  Constants
         ////////////////////////////////////////////////
-        private const int DRAW_FILL = -1;
-        private const int DRAW_ALL  = 0;
+        internal const int DRAW_FILL = -1;
+        internal static readonly Gray DRAW_WHITE = new Gray(byte.MaxValue);
 
 
         ////////////////////////////////////////////////
@@ -109,6 +109,27 @@ namespace EmguCVExtensions
             return image.Width * image.Height;
         }
 
+        private static double MaxValue<TDepth>() {
+            double maxValue = 255;
+            if (typeof(TDepth) == typeof(ushort)) {
+                maxValue = ushort.MaxValue;
+            }
+            else if (typeof(TDepth) == typeof(byte)) {
+                maxValue = byte.MaxValue;
+            }
+            else if (typeof(TDepth) == typeof(float)) {
+                maxValue = float.MaxValue;
+            }
+            else if (typeof(TDepth) == typeof(double)) {
+                maxValue = double.MaxValue;
+            }
+            else {
+                throw new ArgumentException("The type " + typeof(TDepth) + " is not supported.");
+            }
+
+            return maxValue;
+        }
+
 
         ////////////////////////////////////////////////
         //                Adjustments
@@ -129,25 +150,40 @@ namespace EmguCVExtensions
             }
         }
 
-        private static double MaxValue<TDepth>() {
-            double maxValue = 255;
-            if (typeof(TDepth) == typeof(ushort)) {
-                maxValue = ushort.MaxValue;
-            }
-            else if (typeof(TDepth) == typeof(byte)) {
-                maxValue = byte.MaxValue;
-            }
-            else if (typeof(TDepth) == typeof(float)) {
-                maxValue = float.MaxValue;
-            }
-            else if (typeof(TDepth) == typeof(double)) {
-                maxValue = double.MaxValue;
-            }
-            else {
-                throw new ArgumentException("The type " + typeof(TDepth) + " is not supported.");
-            }
 
-            return maxValue;
+        ////////////////////////////////////////////////
+        //                Morphology
+        ////////////////////////////////////////////////
+        public static Image<TColor, TDepth> ErodeBy<TColor, TDepth>(this Image<TColor, TDepth> self, int pixelsErosion)
+            where TColor : struct, IColor
+            where TDepth : new()
+        {
+            var erodedImage = self.MorphologyEx(MorphOp.Erode, Algorithms.CIRCLE(pixelsErosion), new Point(pixelsErosion/2, pixelsErosion/2), 1, BorderType.Default, Algorithms.MORPHOLOGY_BORDER);
+            return erodedImage;
+        }
+
+        public static Image<TColor, TDepth> DilateBy<TColor, TDepth>(this Image<TColor, TDepth> self, int pixelsDilation)
+            where TColor : struct, IColor
+            where TDepth : new()
+        {
+            var dilatedImage = self.MorphologyEx(MorphOp.Dilate, Algorithms.CIRCLE(pixelsDilation), new Point(pixelsDilation/2, pixelsDilation/2), 1, BorderType.Default, Algorithms.MORPHOLOGY_BORDER);
+            return dilatedImage;
+        }
+
+        public static Image<TColor, TDepth> OpenBy<TColor, TDepth>(this Image<TColor, TDepth> self, int pixelsOpenDistance)
+            where TColor : struct, IColor
+            where TDepth : new()
+        {
+            var openedImage = self.MorphologyEx(MorphOp.Open, Algorithms.CIRCLE(pixelsOpenDistance), new Point(pixelsOpenDistance/2, pixelsOpenDistance/2), 1, BorderType.Default, Algorithms.MORPHOLOGY_BORDER);
+            return openedImage;
+        }
+
+        public static Image<TColor, TDepth> CloseBy<TColor, TDepth>(this Image<TColor, TDepth> self, int pixelsCloseDistance)
+            where TColor : struct, IColor
+            where TDepth : new()
+        {
+            var closedImage = self.MorphologyEx(MorphOp.Close, Algorithms.CIRCLE(pixelsCloseDistance), new Point(pixelsCloseDistance/2, pixelsCloseDistance/2), 1, BorderType.Default, Algorithms.MORPHOLOGY_BORDER);
+            return closedImage;
         }
 
 

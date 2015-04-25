@@ -12,11 +12,11 @@ namespace EmguCVExtensions
             where TColor : struct, IColor
             where TDepth : new()
         {
-            var searchImageArea = searchArea.IntersectWith(image.Rectangle());
-            var searchImage = image.GetSubRect(searchImageArea);
+            Rectangle searchImageArea = searchArea.IntersectWith(image.Rectangle());
+            Image<TColor, TDepth> searchImage = image.GetSubRect(searchImageArea);
 
             VectorOfVectorOfPoint contours = new VectorOfVectorOfPoint();
-            CvInvoke.FindContours(searchImage, contours, null, RetrType.List, ChainApproxMethod.ChainApproxSimple);
+            CvInvoke.FindContours(searchImage, contours, null, RetrType.External, ChainApproxMethod.ChainApproxSimple);
 
             return contours;
         }
